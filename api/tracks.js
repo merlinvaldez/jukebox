@@ -9,14 +9,8 @@ tracksRouter.get("/", async (req, res) => {
   res.send(tracks);
 });
 
-tracksRouter.param("id", async (req, res, next, id) => {
-  const track = await getTrackById(id);
+tracksRouter.get("/:id", async (req, res) => {
+  const track = await getTrackById(req.params.id);
   if (!track) return res.status(404).send("Track not found.");
-
-  req.track = track;
-  next();
-});
-
-tracksRouter.get("/:id", (req, res) => {
-  res.send(req.track);
+  res.send(track);
 });

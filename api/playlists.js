@@ -24,6 +24,7 @@ playlistsRouter.post("/", async (req, res) => {
 });
 
 playlistsRouter.param("id", async (req, res, next, id) => {
+  if (!Number.isInteger(id)) return res.status(400).send("id is not a number");
   const playlist = await getPlaylistById(id);
   if (!playlist) return res.status(404).send("Playlist not found.");
 
@@ -37,8 +38,6 @@ playlistsRouter.get("/:id", (req, res) => {
 
 playlistsRouter.post("/:id/tracks", async (req, res) => {
   const playlistId = Number(req.params.id);
-  const { trackId } = req.body;
-
   if (!Number.isInteger(playlistId) || playlistId <= 0) {
     return res.status(400).send("Invalid playlist id.");
   }
