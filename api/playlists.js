@@ -2,8 +2,10 @@ import {
   getPlaylists,
   createPlaylist,
   getPlaylistById,
-  addTracktoPlaylist,
+  getTracksByPlaylistId,
 } from "#db/queries/playlists";
+
+import { createPlaylistTrack } from "#db/queries/playlists_tracks";
 import express from "express";
 const playlistsRouter = express.Router();
 export default playlistsRouter;
@@ -24,8 +26,10 @@ playlistsRouter.post("/", async (req, res) => {
 });
 
 playlistsRouter.param("id", async (req, res, next, id) => {
-  if (!Number.isInteger(id)) return res.status(400).send("id is not a number");
-  const playlist = await getPlaylistById(id);
+  const intId = Number(id);
+  if (!Number.isInteger(intId))
+    return res.status(400).send("id is not a number");
+  const playlist = await getPlaylistById(intId);
   if (!playlist) return res.status(404).send("Playlist not found.");
 
   req.playlist = playlist;
@@ -36,16 +40,19 @@ playlistsRouter.get("/:id", (req, res) => {
   res.send(req.playlist);
 });
 
-playlistsRouter.post("/:id/tracks", async (req, res) => {
-  const playlistId = Number(req.params.id);
-  if (!Number.isInteger(playlistId) || playlistId <= 0) {
-    return res.status(400).send("Invalid playlist id.");
-  }
-  if (!Number.isInteger(trackId) || trackId <= 0) {
-    return res.status(400).send("Request body needs: trackId");
-  }
+playlistsRouter.get("/:id/tracks", async (req, res) => {
+  const tracksOfPlaylist = await getTracksByPlaylistId(req.playlist.id);
 
-  const link = await addTracktoPlaylist({ playlistId, trackId });
-  if (!link) return res.status(200).send({ message: "Track already linked" });
-  res.status(201).send(link);
+  res.send(tracksOfPlaylist);
+});
+
+playlistsRouter.post("/:id/tracks", async (req, res) => {
+  if (!req.body) return res.status(400).send("Request body is required.");
+
+  const { trackId } = req.body;
+
+  if (!trackId) return res.status(400).send("Request body requires: trackId");
+  console.log(req.body);
+  const playlistTrack = await createPlaylistTrack(req.playlist.id, trackId);
+  res.status(201).send(playlistTrack);
 });
